@@ -1,6 +1,8 @@
 package com.example.pokmon.pokemonlist
 
 import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,6 +26,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -31,20 +34,30 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.palette.graphics.Palette
+import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
 import coil.bitmap.BitmapPool
 import coil.compose.ImagePainter
 import coil.compose.rememberImagePainter
+import coil.request.ImageRequest
+import coil.request.SuccessResult
 import coil.size.Size
+import coil.transform.RoundedCornersTransformation
 import coil.transform.Transformation
 import com.example.pokmon.R
 import com.example.pokmon.data.models.PokeListEntry
 import com.example.pokmon.ui.theme.RobotoCondensed
-import com.plcoding.jetpackcomposepokedex.pokemonlist.PokemonListViewModel
+import com.google.accompanist.coil.CoilImage
+import kotlinx.coroutines.launch
+import okhttp3.internal.wait
+import java.lang.Exception
+import kotlin.math.log
 
 @Composable
 fun PokemonListScreen(
-    navController: NavController
+    navController: NavController,
+    viewModel: PokemonListViewModel = hiltViewModel()
 ) {
     Surface(
         color = MaterialTheme.colors.background,
@@ -63,7 +76,7 @@ fun PokemonListScreen(
                     .fillMaxWidth()
                     .padding(16.dp), hint = "search..."
             ) {
-
+                viewModel.searchPokemonList(it)
             }
             Spacer(modifier = Modifier.height(16.dp))
             PokemonList(navController = navController)
@@ -121,15 +134,19 @@ fun PokemonList(
     val endReached by remember { viewModel.endReached }
     val loadError by remember { viewModel.loadError }
     val isLoading by remember { viewModel.isLoading }
+    val isSearching by remember { viewModel.isSearching }
+
 
     LazyColumn(contentPadding = PaddingValues(16.dp)) {
+
         val itemCount = if (pokemonList.size % 2 == 0) {
             pokemonList.size / 2
         } else {
             pokemonList.size / 2 + 1
         }
+
         items(itemCount) {
-            if (it >= itemCount - 1 && !endReached && !isLoading) {
+            if (it >= itemCount - 1 && !endReached && !isLoading && !isSearching) {
                 viewModel.loadPokemonPaginated()
             }
             PokeRow(rowIndex = it, entries = pokemonList, navController = navController)
@@ -183,50 +200,37 @@ fun PokeEntry(
             }
     ) {
         Column {
+            val context = LocalContext.current
 
-            val painter = rememberImagePainter(
-                data = entry.imageUrl,
-                builder = {
-                    crossfade(true)
-                    transformations(
-                        object : Transformation {
-                            override fun key(): String {
-                                return entry.imageUrl
-                            }
+            val imageLoader = ImageLoader(context)
 
-                            override suspend fun transform(
-                                pool: BitmapPool,
-                                input: Bitmap,
-                                size: Size
-                            ): Bitmap {
-                                viewModel.calcDominantColor(input) { color ->
-                                    dominantColor = color
-                                }
-                                return input
-                            }
+            val request = ImageRequest.Builder(context)
+                .crossfade(true)
+                .data(entry.imageUrl)
+                .build()
 
-                        }
-                    )
-                }
+            val imagePainter = rememberImagePainter(
+                request = request,
+                imageLoader = imageLoader
             )
-            val painterState = painter.state
-            if (painterState is ImagePainter.State.Loading) {
-                CircularProgressIndicator(
-                    color = colors.primary,
-                    modifier = Modifier
-                        .size(120.dp)
-                        .scale(0.5f)
-                        .align(CenterHorizontally)
-                )
+
+            LaunchedEffect(key1 = imagePainter) {
+                launch {
+                    val result = (imageLoader.execute(request) as SuccessResult).drawable
+                    viewModel.calcDominantColor(result){
+                        dominantColor = it
+                    }
+                }
             }
 
             Image(
-                painter = painter,
+                painter = imagePainter,
                 contentDescription = entry.pokeName,
                 modifier = Modifier
                     .size(120.dp)
                     .align(CenterHorizontally)
             )
+
 
             Text(
                 text = entry.pokeName,
