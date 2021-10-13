@@ -1,4 +1,4 @@
-package com.example.pokmon.pokemondetail
+package com.example.pokmon.ui.pokemondetail
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -52,12 +52,14 @@ fun PokemonDetailScreen(
     val pokemonInfo = produceState<Resource<Pokemon>>(initialValue = Resource.Loading()) {
         value = viewModel.getPokemonInfo(pokemonName)
     }.value
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(dominantColor)
             .padding(bottom = 16.dp)
     ) {
+
         PokemonDetailTopSection(
             navController = navController,
             modifier = Modifier
@@ -65,6 +67,8 @@ fun PokemonDetailScreen(
                 .fillMaxHeight(0.2f)
                 .align(Alignment.TopCenter)
         )
+
+
 
         PokemonDetailStateWrapper(
             pokemonInfo = pokemonInfo,
@@ -91,25 +95,14 @@ fun PokemonDetailScreen(
                     bottom = 16.dp
                 )
         )
-        Box(
-            contentAlignment = Alignment.TopCenter,
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            if (pokemonInfo is Resource.Success) {
-                pokemonInfo.data?.sprites?.let {
-                    Image(
-                        painter = rememberImagePainter(data = it.front_default) {
-                            crossfade(true)
-                        },
-                        contentDescription = pokemonInfo.data.name,
-                        modifier = Modifier
-                            .size(pokemonImageSize)
-                            .offset(y = topPadding)
-                    )
-                }
-            }
-        }
+
+        PokeImage(
+            pokemonInfo = pokemonInfo,
+            pokemonImageSize = pokemonImageSize,
+            topPadding = topPadding
+        )
+
+
     }
 }
 
@@ -141,6 +134,34 @@ fun PokemonDetailTopSection(
                     navController.popBackStack()
                 }
         )
+    }
+}
+
+@ExperimentalCoilApi
+@Composable
+fun PokeImage(
+    pokemonInfo: Resource<Pokemon>,
+    pokemonImageSize: Dp,
+    topPadding: Dp
+) {
+    Box(
+        contentAlignment = Alignment.TopCenter,
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        if (pokemonInfo is Resource.Success) {
+            pokemonInfo.data?.sprites?.let {
+                Image(
+                    painter = rememberImagePainter(data = it.front_default) {
+                        crossfade(true)
+                    },
+                    contentDescription = pokemonInfo.data.name,
+                    modifier = Modifier
+                        .size(pokemonImageSize)
+                        .offset(y = topPadding)
+                )
+            }
+        }
     }
 }
 
@@ -180,6 +201,7 @@ fun PokemonDetailSection(
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier

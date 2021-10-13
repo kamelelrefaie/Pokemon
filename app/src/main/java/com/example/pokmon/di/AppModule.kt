@@ -17,7 +17,7 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun providePokemonRepository(api: PokeApi) = PokemonRepository(api = api)
+    fun providePokemonRepository(api: PokeApi) =  PokemonRepository(api = api)
 
     @Singleton
     @Provides
@@ -28,4 +28,6 @@ object AppModule {
             .build()
             .create(PokeApi::class.java)
     }
+
+
 }

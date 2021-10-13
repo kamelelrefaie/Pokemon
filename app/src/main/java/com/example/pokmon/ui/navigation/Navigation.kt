@@ -1,4 +1,4 @@
-package com.example.pokmon.navigation
+package com.example.pokmon.ui.navigation
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
@@ -9,11 +9,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.pokmon.SplashScreen
-import com.example.pokmon.pokemondetail.PokemonDetailScreen
-import com.example.pokmon.pokemonlist.PokemonListScreen
+import coil.annotation.ExperimentalCoilApi
+import com.example.pokmon.ui.SplashScreen
+import com.example.pokmon.ui.pokemondetail.PokemonDetailScreen
+import com.example.pokmon.ui.pokemonlist.PokemonListScreen
 import java.util.*
 
+@ExperimentalCoilApi
 @ExperimentalFoundationApi
 @Composable
 fun Navigation() {

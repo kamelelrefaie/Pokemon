@@ -1,4 +1,4 @@
-package com.example.pokmon.pokemonlist
+package com.example.pokmon.ui.pokemonlist
 
 
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -8,26 +8,21 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,7 +38,7 @@ import coil.request.ImageRequest
 import coil.request.SuccessResult
 import com.example.pokmon.R
 import com.example.pokmon.data.models.PokeListEntry
-import com.example.pokmon.navigation.Screen
+import com.example.pokmon.ui.navigation.Screen
 import com.example.pokmon.ui.theme.RobotoCondensed
 import kotlinx.coroutines.launch
 
@@ -52,7 +47,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun PokemonListScreen(
     navController: NavController,
-    viewModel: PokemonListViewModel = hiltViewModel()
 ) {
     Surface(
         color = MaterialTheme.colors.background,
@@ -60,7 +54,6 @@ fun PokemonListScreen(
     ) {
         Column {
             Spacer(modifier = Modifier.height(20.dp))
-
             //poke image
             Image(
                 painter = painterResource(id = R.drawable.ic_international_pok_mon_logo),
@@ -69,61 +62,12 @@ fun PokemonListScreen(
                 alignment = Center
             )
 
-            SearchBar(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp), hint = "search..."
-            ) {
-                viewModel.searchPokemonList(it)
-            }
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             //Create pokeList Composable
             PokemonList(navController = navController)
         }
     }
 }
-
-@Composable
-fun SearchBar(
-    modifier: Modifier,
-    hint: String,
-    onSearch: (String) -> Unit
-) {
-    var text by remember {
-        mutableStateOf("")
-    }
-    var isHintDisplayed by remember {
-        mutableStateOf(hint != "")
-    }
-    Box(modifier = modifier) {
-        BasicTextField(value = text,
-            onValueChange = {
-                text = it
-                onSearch(text)
-            },
-            maxLines = 1,
-            singleLine = true,
-            textStyle = TextStyle(Color.Black),
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(5.dp, CircleShape)
-                .background(Color.White, CircleShape)
-                .padding(vertical = 12.dp, horizontal = 20.dp)
-                .onFocusChanged {
-                    isHintDisplayed = !it.isFocused
-                }
-
-        )
-        if (isHintDisplayed) {
-            Text(
-                text = hint,
-                color = Color.LightGray,
-                modifier = Modifier.padding(vertical = 12.dp, horizontal = 20.dp)
-            )
-        }
-    }
-}
-
 
 @ExperimentalFoundationApi
 @ExperimentalCoilApi
@@ -148,6 +92,7 @@ fun PokemonList(
                         LoadState.Loading -> {
                     item { LoadingItem() }
                     item { LoadingItem() }
+
                 }
                 loadState.append is
                         LoadState.Loading -> {
@@ -156,9 +101,11 @@ fun PokemonList(
                 }
                 loadState.refresh is
                         LoadState.Error -> {
+                    item { ErrorItem() }
                 }
                 loadState.append is
                         LoadState.Error -> {
+                    item { ErrorItem() }
                 }
             }
         }
@@ -169,16 +116,27 @@ fun PokemonList(
 @Composable
 fun LoadingItem() {
     CircularProgressIndicator(
+        color = Color.White,
         modifier =
         Modifier
             .testTag("ProgressBarItem")
             .fillMaxWidth()
             .padding(16.dp)
             .wrapContentWidth(
-                Alignment.CenterHorizontally
+                CenterHorizontally
             )
     )
+
 }
+
+@Composable
+fun ErrorItem() {
+    Text(
+        text = "Check your internet Connection",
+        color = Color.Red, textAlign = TextAlign.Center
+    )
+}
+
 
 @ExperimentalCoilApi
 @Composable
@@ -187,12 +145,12 @@ fun PokeEntry(
     navController: NavController,
     modifier: Modifier = Modifier,
     viewModel: PokemonListViewModel = hiltViewModel()
-
 ) {
     val defaultDominantColor = MaterialTheme.colors.surface
     var dominantColor by remember {
         mutableStateOf(defaultDominantColor)
     }
+
     Box(
         modifier = modifier
             .padding(16.dp)
