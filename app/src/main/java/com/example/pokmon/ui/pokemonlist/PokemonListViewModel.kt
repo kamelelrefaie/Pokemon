@@ -20,7 +20,7 @@ class PokemonListViewModel @Inject constructor(
     private val repository: PokemonRepository
 ) : ViewModel() {
 
-    val pokeList: Flow<PagingData<PokeListEntry>> = Pager(PagingConfig(pageSize = 2)) {
+    val pokeList: Flow<PagingData<PokeListEntry>> = Pager(PagingConfig(pageSize = 20)) {
         PokePagingSource(repository)
     }.flow.cachedIn(viewModelScope)
 
